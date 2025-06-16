@@ -1,6 +1,48 @@
 .map-container {
     height: 400px;
     width: 100%;
-    margin-top: 1rem;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Custom marker styles */
+  .custom-marker {
+    font-size: 2rem;
+    cursor: pointer;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    transition: transform 0.2s ease;
+  }
+  
+  .custom-marker:hover {
+    transform: scale(1.1);
+  }
+  
+  /* Mapbox control styling */
+  .mapboxgl-ctrl-group {
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .mapboxgl-ctrl-group button {
+    border-radius: 0 !important;
+  }
+  
+  .mapboxgl-ctrl-group button:first-child {
+    border-top-left-radius: 8px !important;
+    border-top-right-radius: 8px !important;
+  }
+  
+  .mapboxgl-ctrl-group button:last-child {
+    border-bottom-left-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+  }
+  
+  /* Responsive map */
+  @media (max-width: 768px) {
+    .map-container {
+      height: 300px;
+    }
   }
   
