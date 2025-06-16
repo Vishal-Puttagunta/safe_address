@@ -1,0 +1,17 @@
+.App {
+    text-align: center;
+  }
+  
+  input {
+    padding: 0.5rem;
+    margin-right: 0.5rem;
+  }
+  
+  button {
+    padding: 0.5rem;
+  }
+  
+  .ratings {
+    margin-top: 1rem;
+  }
+  
