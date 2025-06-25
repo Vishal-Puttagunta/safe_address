@@ -11,6 +11,67 @@ function App() {
   const [weather, setWeather] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [walkScore, setWalkScore] = useState(null)
+  const [crimeScore, setCrimeScore] = useState(null)
+  const [groceryScore, setGroceryScore] = useState(null)
+
+  // Helper: Normalize Walk Score (0-100) to 1-10
+  const normalizeWalkScore = (score) => Math.max(1, Math.round(score / 10))
+  // Helper: Normalize crime rate (lower = higher score, example logic)
+  const normalizeCrimeScore = (rate) => {
+    if (rate == null) return null
+    // Example: 0-100 crimes per 1000 people => 10-1
+    if (rate <= 5) return 10
+    if (rate <= 10) return 8
+    if (rate <= 20) return 6
+    if (rate <= 40) return 4
+    if (rate <= 60) return 2
+    return 1
+  }
+  // Helper: Normalize grocery count to 1-10 (example: 0-20+ stores)
+  const normalizeGroceryScore = (count) => {
+    if (count >= 20) return 10
+    if (count >= 15) return 8
+    if (count >= 10) return 6
+    if (count >= 5) return 4
+    if (count >= 2) return 2
+    return 1
+  }
+
+  const fetchScores = async (lat, lon) => {
+    // Walk Score API via proxy
+    try {
+      const walkRes = await axios.get(`http://localhost:5001/api/walkscore?lat=${lat}&lon=${lon}`)
+      const score = normalizeWalkScore(walkRes.data.walkscore)
+      setWalkScore(score)
+      console.log('Walk Score:', walkRes.data.walkscore, 'Normalized:', score)
+    } catch (e) {
+      setWalkScore(null)
+      console.log('Walk Score error:', e)
+    }
+    // Crime API via proxy
+    try {
+      const crimeRes = await axios.get(`http://localhost:5001/api/crime?lat=${lat}&lon=${lon}`)
+      const crimeRate = crimeRes.data.incidents ? crimeRes.data.incidents.length : 0
+      const score = normalizeCrimeScore(crimeRate)
+      setCrimeScore(score)
+      console.log('Crime Rate:', crimeRate, 'Normalized:', score)
+    } catch (e) {
+      setCrimeScore(null)
+      console.log('Crime Score error:', e)
+    }
+    // Google Places API for groceries via proxy
+    try {
+      const placesRes = await axios.get(`http://localhost:5001/api/grocery?lat=${lat}&lon=${lon}`)
+      const count = placesRes.data.results ? placesRes.data.results.length : 0
+      const score = normalizeGroceryScore(count)
+      setGroceryScore(score)
+      console.log('Grocery Count:', count, 'Normalized:', score)
+    } catch (e) {
+      setGroceryScore(null)
+      console.log('Grocery Score error:', e)
+    }
+  }
 
   const handleSearch = async () => {
     if (!zipcode.trim()) {
@@ -20,6 +81,9 @@ function App() {
 
     setLoading(true)
     setError("")
+    setWalkScore(null)
+    setCrimeScore(null)
+    setGroceryScore(null)
 
     try {
       // 1️⃣ Geocode ZIP using Mapbox
@@ -33,15 +97,19 @@ function App() {
 
       const [lon, lat] = geoRes.data.features[0].center
       setLocation({ lat, lon })
-
-      // 2️⃣ Get weather
+      // Await fetchScores so scores update after location is set
+      await fetchScores(lat, lon)
+      // 2️⃣ Get weather via proxy
       const weatherRes = await axios.get(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${process.env.REACT_APP_OPENWEATHER_KEY}&units=imperial`,
+        `http://localhost:5001/api/weather?lat=${lat}&lon=${lon}`
       )
       setWeather(weatherRes.data)
     } catch (err) {
       console.error(err)
       setError("Error finding location. Please check your ZIP code and try again.")
+      setWalkScore(null)
+      setCrimeScore(null)
+      setGroceryScore(null)
     } finally {
       setLoading(false)
     }
@@ -122,7 +190,7 @@ function App() {
               <h3>Location Map</h3>
             </div>
             <div className="card-content">
-              <Map location={location} />
+              <Map location={location} walkScore={walkScore} crimeScore={crimeScore} groceryScore={groceryScore} />
             </div>
           </div>
         </section>

@@ -3,10 +3,11 @@
 import { useEffect, useRef } from "react"
 import mapboxgl from "mapbox-gl"
 import "./Map.css"
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_TOKEN
 
-const Map = ({ location }) => {
+const Map = ({ location, walkScore, crimeScore, groceryScore }) => {
   const mapContainer = useRef(null)
   const map = useRef(null)
   const marker = useRef(null)
@@ -48,7 +49,29 @@ const Map = ({ location }) => {
     }
   }, [location])
 
-  return <div ref={mapContainer} className="map-container" />
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* Floating scores box */}
+      <div style={{
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        background: 'white',
+        padding: '16px',
+        borderRadius: '12px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        zIndex: 1000,
+        minWidth: 180,
+        textAlign: 'left',
+        fontWeight: 500
+      }}>
+        <div style={{ marginBottom: 8 }}>Walkability: {walkScore !== null ? walkScore : '--'}/10</div>
+        <div style={{ marginBottom: 8 }}>Crime: {crimeScore !== null ? crimeScore : '--'}/10</div>
+        <div>Grocery Access: {groceryScore !== null ? groceryScore : '--'}/10</div>
+      </div>
+      <div ref={mapContainer} className="map-container" />
+    </div>
+  )
 }
 
 export default Map
