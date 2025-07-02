@@ -97,19 +97,29 @@ function App() {
 
       const [lon, lat] = geoRes.data.features[0].center
       setLocation({ lat, lon })
-      // Await fetchScores so scores update after location is set
+      
+      // 2️⃣ Fetch scores - this handles its own errors for each API
       await fetchScores(lat, lon)
-      // 2️⃣ Get weather via proxy
-      const weatherRes = await axios.get(
-        `http://localhost:5001/api/weather?lat=${lat}&lon=${lon}`
-      )
-      setWeather(weatherRes.data)
+      
+      // 3️⃣ Get weather via proxy - independent of scores
+      try {
+        const weatherRes = await axios.get(
+          `http://localhost:5001/api/weather?lat=${lat}&lon=${lon}`
+        )
+        setWeather(weatherRes.data)
+      } catch (weatherErr) {
+        console.error('Weather API error:', weatherErr)
+        setWeather(null)
+        // Don't reset scores for weather API failure
+      }
     } catch (err) {
       console.error(err)
       setError("Error finding location. Please check your ZIP code and try again.")
+      // Only reset scores if geocoding fails
       setWalkScore(null)
       setCrimeScore(null)
       setGroceryScore(null)
+      setWeather(null)
     } finally {
       setLoading(false)
     }
