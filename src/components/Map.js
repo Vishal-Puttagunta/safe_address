@@ -65,8 +65,6 @@ const Map = ({ location, walkScore, crimeScore, groceryScore, airQualityScore, w
         textAlign: 'left',
         fontWeight: 500
       }}>
-        <div style={{ marginBottom: 8 }}>Walkability: {walkScore !== null ? walkScore : '--'}/10</div>
-        <div style={{ marginBottom: 8 }}>Crime: {crimeScore !== null ? crimeScore : '--'}/10</div>
         <div style={{ marginBottom: 8 }}>Grocery Access: {groceryScore !== null ? groceryScore : '--'}/10</div>
         <div style={{ marginBottom: 8 }}>Air Quality: {airQualityScore !== null ? airQualityScore : '--'}/10</div>
         <div style={{ marginBottom: 8 }}>Weather: {weatherScore !== null ? weatherScore : '--'}/10</div>
