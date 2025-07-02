@@ -16,6 +16,7 @@ function App() {
   const [groceryScore, setGroceryScore] = useState(null)
   const [airQualityScore, setAirQualityScore] = useState(null)
   const [weatherScore, setWeatherScore] = useState(null)
+  const [activitiesScore, setActivitiesScore] = useState(null)
 
   // Helper: Normalize Walk Score (0-100) to 1-10
   const normalizeWalkScore = (score) => Math.max(1, Math.round(score / 10))
@@ -74,6 +75,15 @@ function App() {
     // Average the scores
     return Math.round((tempScore + conditionScore) / 2);
   }
+  // Helper: Normalize activities/events count to 1-10
+  const normalizeActivitiesScore = (count) => {
+    if (count >= 50) return 10    // Excellent variety
+    if (count >= 30) return 8     // Great variety
+    if (count >= 20) return 6     // Good variety
+    if (count >= 10) return 4     // Moderate variety
+    if (count >= 5) return 2      // Limited variety
+    return 1                      // Very few activities
+  }
 
   const fetchScores = async (lat, lon) => {
     // Walk Score API via proxy
@@ -131,6 +141,28 @@ function App() {
       setWeatherScore(null)
       console.log('Weather Score error:', e)
     }
+    // SerpAPI for activities/events via proxy
+    try {
+      const eventsRes = await axios.get(`http://localhost:5001/api/events?lat=${lat}&lon=${lon}`)
+      console.log('Full Events Response:', eventsRes.data)
+      
+      // Try different possible response structures
+      let count = 0;
+      if (eventsRes.data.events_results && eventsRes.data.events_results.length > 0) {
+        count = eventsRes.data.events_results.length;
+      } else if (eventsRes.data.events && eventsRes.data.events.length > 0) {
+        count = eventsRes.data.events.length;
+      } else if (eventsRes.data.local_results && eventsRes.data.local_results.length > 0) {
+        count = eventsRes.data.local_results.length;
+      }
+      
+      const score = normalizeActivitiesScore(count)
+      setActivitiesScore(score)
+      console.log('Activities Count:', count, 'Normalized:', score)
+    } catch (e) {
+      setActivitiesScore(null)
+      console.log('Activities Score error:', e)
+    }
   }
 
   const handleSearch = async () => {
@@ -146,6 +178,7 @@ function App() {
     setGroceryScore(null)
     setAirQualityScore(null)
     setWeatherScore(null)
+    setActivitiesScore(null)
 
     try {
       // 1️⃣ Geocode ZIP using Mapbox
@@ -183,6 +216,7 @@ function App() {
       setGroceryScore(null)
       setAirQualityScore(null)
       setWeatherScore(null)
+      setActivitiesScore(null)
       setWeather(null)
     } finally {
       setLoading(false)
@@ -264,7 +298,7 @@ function App() {
               <h3>Location Map</h3>
             </div>
             <div className="card-content">
-              <Map location={location} walkScore={walkScore} crimeScore={crimeScore} groceryScore={groceryScore} airQualityScore={airQualityScore} weatherScore={weatherScore} />
+              <Map location={location} walkScore={walkScore} crimeScore={crimeScore} groceryScore={groceryScore} airQualityScore={airQualityScore} weatherScore={weatherScore} activitiesScore={activitiesScore} />
             </div>
           </div>
         </section>

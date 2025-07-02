@@ -96,6 +96,23 @@ app.get('/api/airquality', async (req, res) => {
   }
 });
 
+// SerpAPI Events Proxy
+app.get('/api/events', async (req, res) => {
+  const { lat, lon } = req.query;
+  const apiKey = process.env.REACT_APP_EVENTS_KEY;
+  const url = `https://serpapi.com/search.json?engine=google_events&q=local+events+activities&ll=@${lat},${lon},14z&api_key=${apiKey}`;
+  console.log('[Events] Using API Key:', apiKey ? 'Present' : 'Missing');
+  console.log('[Events] Request URL:', url);
+  try {
+    const response = await axios.get(url);
+    console.log('[Events] API Response:', response.data);
+    res.json(response.data);
+  } catch (err) {
+    console.error('[Events] API Error:', err.response ? err.response.data : err.message);
+    res.status(500).json({ error: 'SerpAPI Events error', details: err.message, apiError: err.response ? err.response.data : null });
+  }
+});
+
 const PORT = 5001;
 app.listen(PORT, () => {
   console.log(`API Proxy server running on port ${PORT}`);
