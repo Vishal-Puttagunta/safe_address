@@ -15,6 +15,7 @@ function App() {
   const [crimeScore, setCrimeScore] = useState(null)
   const [groceryScore, setGroceryScore] = useState(null)
   const [airQualityScore, setAirQualityScore] = useState(null)
+  const [weatherScore, setWeatherScore] = useState(null)
 
   // Helper: Normalize Walk Score (0-100) to 1-10
   const normalizeWalkScore = (score) => Math.max(1, Math.round(score / 10))
@@ -46,6 +47,32 @@ function App() {
     if (aqi <= 200) return 4    // Unhealthy
     if (aqi <= 300) return 2    // Very Unhealthy
     return 1                    // Hazardous
+  }
+  // Helper: Normalize weather conditions to 1-10 (based on temperature and conditions)
+  const normalizeWeatherScore = (temp, condition) => {
+    // Temperature scoring (Fahrenheit)
+    let tempScore = 0;
+    if (temp >= 65 && temp <= 75) tempScore = 10;      // Perfect temperature
+    else if (temp >= 60 && temp <= 80) tempScore = 8;  // Good temperature
+    else if (temp >= 50 && temp <= 85) tempScore = 6;  // Acceptable temperature
+    else if (temp >= 40 && temp <= 90) tempScore = 4;  // Uncomfortable
+    else if (temp >= 30 && temp <= 95) tempScore = 2;  // Very uncomfortable
+    else tempScore = 1;                                 // Extreme temperatures
+    
+    // Condition scoring
+    let conditionScore = 10;
+    const badConditions = ['rain', 'snow', 'sleet', 'storm', 'thunder', 'fog', 'mist'];
+    const moderateConditions = ['cloudy', 'overcast', 'drizzle'];
+    
+    const conditionLower = condition.toLowerCase();
+    if (badConditions.some(bad => conditionLower.includes(bad))) {
+      conditionScore = 3;
+    } else if (moderateConditions.some(mod => conditionLower.includes(mod))) {
+      conditionScore = 6;
+    }
+    
+    // Average the scores
+    return Math.round((tempScore + conditionScore) / 2);
   }
 
   const fetchScores = async (lat, lon) => {
@@ -92,6 +119,18 @@ function App() {
       setAirQualityScore(null)
       console.log('Air Quality Score error:', e)
     }
+    // WeatherAPI.com for weather score via proxy
+    try {
+      const weatherRes = await axios.get(`http://localhost:5001/api/weather?lat=${lat}&lon=${lon}`)
+      const temp = weatherRes.data.current ? weatherRes.data.current.temp_f : null
+      const condition = weatherRes.data.current ? weatherRes.data.current.condition.text : null
+      const score = normalizeWeatherScore(temp, condition)
+      setWeatherScore(score)
+      console.log('Weather Temp:', temp, 'Condition:', condition, 'Normalized:', score)
+    } catch (e) {
+      setWeatherScore(null)
+      console.log('Weather Score error:', e)
+    }
   }
 
   const handleSearch = async () => {
@@ -106,6 +145,7 @@ function App() {
     setCrimeScore(null)
     setGroceryScore(null)
     setAirQualityScore(null)
+    setWeatherScore(null)
 
     try {
       // 1️⃣ Geocode ZIP using Mapbox
@@ -142,6 +182,7 @@ function App() {
       setCrimeScore(null)
       setGroceryScore(null)
       setAirQualityScore(null)
+      setWeatherScore(null)
       setWeather(null)
     } finally {
       setLoading(false)
@@ -223,7 +264,7 @@ function App() {
               <h3>Location Map</h3>
             </div>
             <div className="card-content">
-              <Map location={location} walkScore={walkScore} crimeScore={crimeScore} groceryScore={groceryScore} airQualityScore={airQualityScore} />
+              <Map location={location} walkScore={walkScore} crimeScore={crimeScore} groceryScore={groceryScore} airQualityScore={airQualityScore} weatherScore={weatherScore} />
             </div>
           </div>
         </section>
@@ -247,11 +288,11 @@ function App() {
                         <span className="temp-icon">🌡️</span>
                         <div className="temp-info">
                           <span className="temp-label">Temperature</span>
-                          <span className="temp-value">{Math.round(weather.main.temp)}°F</span>
+                          <span className="temp-value">{Math.round(weather.current.temp_f)}°F</span>
                         </div>
                         <div className="feels-like">
                           <span className="feels-label">Feels like</span>
-                          <span className="feels-value">{Math.round(weather.main.feels_like)}°F</span>
+                          <span className="feels-value">{Math.round(weather.current.feelslike_f)}°F</span>
                         </div>
                       </div>
                     </div>
@@ -261,7 +302,7 @@ function App() {
                       <span className="condition-icon">☁️</span>
                       <div className="condition-info">
                         <span className="condition-label">Condition</span>
-                        <span className="condition-value">{weather.weather[0].description}</span>
+                        <span className="condition-value">{weather.current.condition.text}</span>
                       </div>
                     </div>
 
@@ -269,18 +310,18 @@ function App() {
                     <div className="weather-details">
                       <div className="detail-item">
                         <span className="detail-label">Humidity</span>
-                        <span className="detail-value">{weather.main.humidity}%</span>
+                        <span className="detail-value">{weather.current.humidity}%</span>
                       </div>
                       <div className="detail-item">
-                        <span className="detail-label">Pressure</span>
-                        <span className="detail-value">{weather.main.pressure} hPa</span>
+                        <span className="detail-label">Wind Speed</span>
+                        <span className="detail-value">{weather.current.wind_mph} mph</span>
                       </div>
                     </div>
 
                     {/* Location Name */}
                     <div className="location-info">
                       <span className="location-label">Location</span>
-                      <span className="location-name">{weather.name}</span>
+                      <span className="location-name">{weather.location.name}, {weather.location.region}</span>
                     </div>
                   </div>
                 </div>

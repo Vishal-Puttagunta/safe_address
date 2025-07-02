@@ -62,15 +62,20 @@ app.get('/api/grocery', async (req, res) => {
   }
 });
 
-// OpenWeather Proxy
+// WeatherAPI.com Proxy
 app.get('/api/weather', async (req, res) => {
   const { lat, lon } = req.query;
+  const apiKey = process.env.REACT_APP_WEATHER_KEY;
+  const url = `http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${lat},${lon}&aqi=no`;
+  console.log('[Weather] Using API Key:', apiKey ? 'Present' : 'Missing');
+  console.log('[Weather] Request URL:', url);
   try {
-    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${process.env.REACT_APP_OPENWEATHER_KEY}&units=imperial`;
     const response = await axios.get(url);
+    console.log('[Weather] API Response:', response.data);
     res.json(response.data);
   } catch (err) {
-    res.status(500).json({ error: 'OpenWeather API error', details: err.message });
+    console.error('[Weather] API Error:', err.response ? err.response.data : err.message);
+    res.status(500).json({ error: 'WeatherAPI error', details: err.message, apiError: err.response ? err.response.data : null });
   }
 });
 
@@ -94,4 +99,8 @@ app.get('/api/airquality', async (req, res) => {
 const PORT = 5001;
 app.listen(PORT, () => {
   console.log(`API Proxy server running on port ${PORT}`);
+  console.log('Available environment variables:');
+  console.log('REACT_APP_WEATHER_KEY:', process.env.REACT_APP_WEATHER_KEY ? 'Present' : 'Missing');
+  console.log('REACT_APP_AIR_KEY:', process.env.REACT_APP_AIR_KEY ? 'Present' : 'Missing');
+  console.log('REACT_APP_WALKSCORE_API_KEY:', process.env.REACT_APP_WALKSCORE_API_KEY ? 'Present' : 'Missing');
 });
