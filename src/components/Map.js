@@ -7,7 +7,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_TOKEN
 
-const Map = ({ location, walkScore, crimeScore, groceryScore }) => {
+const Map = ({ location, walkScore, crimeScore, groceryScore, airQualityScore }) => {
   const mapContainer = useRef(null)
   const map = useRef(null)
   const marker = useRef(null)
@@ -67,7 +67,8 @@ const Map = ({ location, walkScore, crimeScore, groceryScore }) => {
       }}>
         <div style={{ marginBottom: 8 }}>Walkability: {walkScore !== null ? walkScore : '--'}/10</div>
         <div style={{ marginBottom: 8 }}>Crime: {crimeScore !== null ? crimeScore : '--'}/10</div>
-        <div>Grocery Access: {groceryScore !== null ? groceryScore : '--'}/10</div>
+        <div style={{ marginBottom: 8 }}>Grocery Access: {groceryScore !== null ? groceryScore : '--'}/10</div>
+        <div>Air Quality: {airQualityScore !== null ? airQualityScore : '--'}/10</div>
       </div>
       <div ref={mapContainer} className="map-container" />
     </div>

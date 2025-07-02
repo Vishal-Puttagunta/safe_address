@@ -14,6 +14,7 @@ function App() {
   const [walkScore, setWalkScore] = useState(null)
   const [crimeScore, setCrimeScore] = useState(null)
   const [groceryScore, setGroceryScore] = useState(null)
+  const [airQualityScore, setAirQualityScore] = useState(null)
 
   // Helper: Normalize Walk Score (0-100) to 1-10
   const normalizeWalkScore = (score) => Math.max(1, Math.round(score / 10))
@@ -36,6 +37,15 @@ function App() {
     if (count >= 5) return 4
     if (count >= 2) return 2
     return 1
+  }
+  // Helper: Normalize air quality AQI to 1-10 (lower AQI = higher score)
+  const normalizeAirQualityScore = (aqi) => {
+    if (aqi <= 50) return 10    // Good
+    if (aqi <= 100) return 8    // Moderate
+    if (aqi <= 150) return 6    // Unhealthy for Sensitive Groups
+    if (aqi <= 200) return 4    // Unhealthy
+    if (aqi <= 300) return 2    // Very Unhealthy
+    return 1                    // Hazardous
   }
 
   const fetchScores = async (lat, lon) => {
@@ -71,6 +81,17 @@ function App() {
       setGroceryScore(null)
       console.log('Grocery Score error:', e)
     }
+    // IQAir API for air quality via proxy
+    try {
+      const airRes = await axios.get(`http://localhost:5001/api/airquality?lat=${lat}&lon=${lon}`)
+      const aqi = airRes.data.data ? airRes.data.data.current.pollution.aqius : null
+      const score = normalizeAirQualityScore(aqi)
+      setAirQualityScore(score)
+      console.log('Air Quality AQI:', aqi, 'Normalized:', score)
+    } catch (e) {
+      setAirQualityScore(null)
+      console.log('Air Quality Score error:', e)
+    }
   }
 
   const handleSearch = async () => {
@@ -84,6 +105,7 @@ function App() {
     setWalkScore(null)
     setCrimeScore(null)
     setGroceryScore(null)
+    setAirQualityScore(null)
 
     try {
       // 1️⃣ Geocode ZIP using Mapbox
@@ -119,6 +141,7 @@ function App() {
       setWalkScore(null)
       setCrimeScore(null)
       setGroceryScore(null)
+      setAirQualityScore(null)
       setWeather(null)
     } finally {
       setLoading(false)
@@ -200,7 +223,7 @@ function App() {
               <h3>Location Map</h3>
             </div>
             <div className="card-content">
-              <Map location={location} walkScore={walkScore} crimeScore={crimeScore} groceryScore={groceryScore} />
+              <Map location={location} walkScore={walkScore} crimeScore={crimeScore} groceryScore={groceryScore} airQualityScore={airQualityScore} />
             </div>
           </div>
         </section>

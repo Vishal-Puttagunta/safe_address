@@ -10,7 +10,7 @@ app.use(cors());
 // Walk Score Proxy
 app.get('/api/walkscore', async (req, res) => {
   const { lat, lon } = req.query;
-  const apiKey = process.env.WALKSCORE_API_KEY;
+  const apiKey = process.env.REACT_APP_WALKSCORE_API_KEY;
   const url = `https://api.walkscore.com/score?format=json&lat=${lat}&lon=${lon}&wsapikey=${apiKey}`;
   console.log('[WalkScore] Using API Key:', apiKey);
   console.log('[WalkScore] Request URL:', url);
@@ -27,7 +27,7 @@ app.get('/api/walkscore', async (req, res) => {
 // Crimeometer Proxy
 app.get('/api/crime', async (req, res) => {
   const { lat, lon } = req.query;
-  const apiKey = process.env.CRIME_API_KEY;
+  const apiKey = process.env.REACT_APP_CRIME_API_KEY;
   const url = `https://api.crimeometer.com/v1/incidents/raw-data?lat=${lat}&lon=${lon}&distance=1mi&datetime_ini=2024-01-01T00:00:00Z&datetime_end=2024-12-31T23:59:59Z`;
   console.log('[Crime] Using API Key:', apiKey);
   console.log('[Crime] Request URL:', url);
@@ -46,12 +46,19 @@ app.get('/api/crime', async (req, res) => {
 // Google Places Proxy
 app.get('/api/grocery', async (req, res) => {
   const { lat, lon } = req.query;
+  const apiKey = process.env.REACT_APP_GOOGLE_PLACES_API_KEY;
+  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&radius=2000&type=grocery_or_supermarket&key=${apiKey}`;
+  console.log('[Grocery] Using API Key:', apiKey ? 'Present' : 'Missing');
+  console.log('[Grocery] Request URL:', url);
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&radius=2000&type=grocery_or_supermarket&key=${process.env.GOOGLE_PLACES_API_KEY}`;
     const response = await axios.get(url);
+    console.log('[Grocery] API Status:', response.data.status);
+    console.log('[Grocery] Results Count:', response.data.results ? response.data.results.length : 0);
+    console.log('[Grocery] Full API Response:', response.data);
     res.json(response.data);
   } catch (err) {
-    res.status(500).json({ error: 'Google Places API error', details: err.message });
+    console.error('[Grocery] API Error:', err.response ? err.response.data : err.message);
+    res.status(500).json({ error: 'Google Places API error', details: err.message, apiError: err.response ? err.response.data : null });
   }
 });
 
@@ -59,11 +66,28 @@ app.get('/api/grocery', async (req, res) => {
 app.get('/api/weather', async (req, res) => {
   const { lat, lon } = req.query;
   try {
-    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${process.env.OPENWEATHER_KEY}&units=imperial`;
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${process.env.REACT_APP_OPENWEATHER_KEY}&units=imperial`;
     const response = await axios.get(url);
     res.json(response.data);
   } catch (err) {
     res.status(500).json({ error: 'OpenWeather API error', details: err.message });
+  }
+});
+
+// IQAir Proxy
+app.get('/api/airquality', async (req, res) => {
+  const { lat, lon } = req.query;
+  const apiKey = process.env.REACT_APP_AIR_KEY;
+  const url = `http://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=${apiKey}`;
+  console.log('[AirQuality] Using API Key:', apiKey ? 'Present' : 'Missing');
+  console.log('[AirQuality] Request URL:', url);
+  try {
+    const response = await axios.get(url);
+    console.log('[AirQuality] API Response:', response.data);
+    res.json(response.data);
+  } catch (err) {
+    console.error('[AirQuality] API Error:', err.response ? err.response.data : err.message);
+    res.status(500).json({ error: 'IQAir API error', details: err.message, apiError: err.response ? err.response.data : null });
   }
 });
 
